@@ -221,25 +221,50 @@ def random_mini_batches(X, Y, mini_batch_size = 64, seed = 0):
 
 ## Defining function: Forward Propagation Architecture version 01
 ###########################################################################################################################
-def forward_propagation_arch_v01(X, parameters):
+def forward_propagation(X, parameters):
+
     """
-    Implements forward propagation (and computes the loss).
+  Retrieve the mlflow experiment with the given id or name.
+
+  Parameters:
+  ----------
+  experiment_id: str
+    The id of the experiment to retrieve.
+  experiment_name:
+    The name of the experiment to retrieve.
+  
+  Returns:
+  ----------
+  experiment: mlflow.entities.Experiment
+    The mlflow experiment with the given id or name.
+  """
+    """
+    Implements forward propagation.
     
     Arguments:
-    X -- input dataset, of shape (input size, number of examples)
-    parameters -- python dictionary containing your parameters "W1", "b1", "W2", "b2", "W3", "b3":
-                    W1 -- weight matrix of shape ()
-                    b1 -- bias vector of shape ()
-                    W2 -- weight matrix of shape ()
-                    b2 -- bias vector of shape ()
-                    W3 -- weight matrix of shape ()
-                    b3 -- bias vector of shape ()
+    ----------
+    X: numpy.ndarray 
+        The input dataset of shape (input size, number of examples)
+
+    parameters: dict
+        A python dictionary containing the trained parameters "W1", "b1", "W2", "b2", "W3", "b3":
+        W1: weight matrix of shape (n_neurons_l1, input size)
+        b1: bias vector of shape (n_neurons_l1, 1)
+        W2: weight matrix of shape (n_neurons_l2, n_neurons_l1)
+        b2: bias vector of shape (n_neurons_l2, 1)
+        W3: weight matrix of shape (n_neurons_l3, n_neurons_l2)
+        b3: bias vector of shape (n_neurons_l3, 1)
     
     Returns:
-    a3, cache
+    ----------
+    a3: numpy.ndarray
+        The values calculated after the acivation function for each neuron in layer l3
+
+    cache: tuple
+        A tuple containing all calculaions that will be used during backpropagation.
     """
     
-    # retrieve parameters
+    # Retrieve parameters
     W1 = parameters["W1"]
     b1 = parameters["b1"]
     W2 = parameters["W2"]
@@ -247,22 +272,27 @@ def forward_propagation_arch_v01(X, parameters):
     W3 = parameters["W3"]
     b3 = parameters["b3"]
     
-    # LINEAR -> RELU -> LINEAR -> RELU -> LINEAR -> SIGMOID
+    # LINEAR -> RELU
     z1 = np.dot(W1, X) + b1
     a1 = relu(z1)
+
+    # LINEAR -> RELU
     z2 = np.dot(W2, a1) + b2
     a2 = relu(z2)
+
+    # LINEAR -> CUSTOM (SIGMOID + IDENTITY)
+    # Neuron with sigmoid activation function predicts propensity
+    # Neuron with identity activation function predicts Customer Lifetime Value
     z3 = np.dot(W3, a2) + b3
-    a3 = sigmoid(z3)
+    a3 = np.concatenate([sigmoid(z3[0,:]).reshape(1,-1), z3[1,:].reshape(1,-1)], axis=0)
     
     cache = (z1, a1, W1, b1, z2, a2, W2, b2, z3, a3, W3, b3)
     
     return a3, cache
 
-
 ## Defining function: Backward Propagation Architecture version 01
 ###########################################################################################################################
-def cost_function_arch_v01(a3, Y):
+def loss_function(a3, Y):
     
     """
     Implement the cost function
@@ -272,7 +302,7 @@ def cost_function_arch_v01(a3, Y):
     Y -- "true" labels vector, same shape as a3
     
     Returns:
-    cost - value of the cost function without dividing by number of training examples
+    total_loss - value of the cost function without dividing by number of training examples
     
     Note: 
     This is used with mini-batches, 
@@ -280,17 +310,56 @@ def cost_function_arch_v01(a3, Y):
     and then divide by the m training examples
     """
 
-    epsilon=1e-8
+    def binary_cross_entropy_loss(y_true, y_pred):
+
+        # Defining a small value to prevent divide by zero
+        epsilon=1e-8
+
+        # Creating a Greater-than-zero Indicator Array
+        ind_1 = y_true.copy()
+        ind_1[ind_1 > 0] = 1
+
+        # Calculating Binary Cross-Entropy Loss
+        logprobs = np.multiply(-np.log(y_pred+epsilon), ind_1) + np.multiply(-np.log(1-y_pred+epsilon), 1 - ind_1)
+        bce_loss =  np.sum(logprobs)
+
+        return bce_loss
+
+    def mean_squared_error_loss(y_true, y_pred):
+
+        # Defining a small value to prevent divide by zero
+        epsilon=1e-8
+
+        # Creating a Greater-than-zero Indicator Array
+        ind_1 = y_true.copy()
+        ind_1[ind_1 > 0] = 1
+
+        # Calculating Mean Squared Error
+        mse_error = np.multiply((y_true-y_pred)**2, ind_1)
+        mse_loss = np.sum(mse_error)
+
+        return mse_loss
+
+    # Reshaping vectors
+    Y  = Y.reshape(1,-1).T
+    p  = a3[0,:].reshape(1,-1).T
+    mu = a3[1,:].reshape(1,-1).T
     
-    logprobs = np.multiply(-np.log(a3+epsilon),Y) + np.multiply(-np.log(1-a3+epsilon), 1 - Y)
-    cost_total =  np.sum(logprobs)
+    # Calculating Binary Cross-Entropy Loss
+    bce_loss =  binary_cross_entropy_loss(y_true=Y, y_pred=p)
+
+    # Calculating Root Mean Squared Error
+    mse_loss = mean_squared_error_loss(y_true=Y, y_pred=mu)
+
+    # Calculating Total Cost
+    total_loss = bce_loss + mse_loss
     
-    return cost_total
+    return total_loss
 
 
 ## Defining function: Backward Propagation Architecture version 01
 ###########################################################################################################################
-def backward_propagation_arch_v01(X, Y, cache):
+def backward_propagation(X, Y, cache):
     """
     Implement the backward propagation presented in figure 2.
     
@@ -304,16 +373,25 @@ def backward_propagation_arch_v01(X, Y, cache):
     """
     m = X.shape[1]
     (z1, a1, W1, b1, z2, a2, W2, b2, z3, a3, W3, b3) = cache
+
+    # Creating a Greater-than-zero Indicator Array
+    I1 = Y.copy()
+    I1[I1 > 0] = 1
     
-    dz3 = 1./m * (a3 - Y)
+    # Calculating layer 3 backpropagation
+    dz3_0 =  (1/m) * ((1 - I1) / (1 - a3[0,:]) - I1 / a3[0,:]) * a3[0,:]  # This derivative considers that the first neuron in the last layer uses a sigmoid activation function and a BCE cost function
+    dz3_1 =  (2/m) * (a3[1,:] - Y) * I1 # This derivative considers that the second neuron in the last layer uses a identity activation function and a MSE cost function
+    dz3 = np.concatenate([dz3_0.reshape(1,-1), dz3_1.reshape(1,-1)], axis=0)
     dW3 = np.dot(dz3, a2.T)
     db3 = np.sum(dz3, axis=1, keepdims = True)
     
+    # Calculating layer 2 backpropagation
     da2 = np.dot(W3.T, dz3)
     dz2 = np.multiply(da2, np.int64(a2 > 0))
     dW2 = np.dot(dz2, a1.T)
     db2 = np.sum(dz2, axis=1, keepdims = True)
     
+    # Calculating layer 1 backpropagation
     da1 = np.dot(W2.T, dz2)
     dz1 = np.multiply(da1, np.int64(a1 > 0))
     dW1 = np.dot(dz1, X.T)
@@ -324,11 +402,11 @@ def backward_propagation_arch_v01(X, Y, cache):
                  "da1": da1, "dz1": dz1, "dW1": dW1, "db1": db1}
     
     return gradients
-  
+
 
 ## Defining function: Print Progress
 ###########################################################################################################################
-def print_progress(epoch_id, batch_id, n_batches, tr_loss, tr_auc, vd_loss, vd_auc):
+def print_progress(epoch_id, batch_id, n_batches, tr_loss, vd_loss):
   """
   This function receives the current time, the start time (when the network clustering process actually started), the number of clusters found in the network,
   as for the current time, the number of remaining sub-clusters in the network and the original size of the network. The function then prints a log of the
@@ -347,7 +425,7 @@ def print_progress(epoch_id, batch_id, n_batches, tr_loss, tr_auc, vd_loss, vd_a
   """
 
   # Creating response string
-  response = "Epoch: {} | Batch: {}/{} | Train loss: {} | Train AUC: {} | Valid loss: {} | Valid AUC: {}"
+  response = "Epoch: {} | Batch: {}/{} | Train loss: {} | Valid loss: {}"
 
   # Plot status
   sys.stdout.write('\r')
@@ -356,9 +434,7 @@ def print_progress(epoch_id, batch_id, n_batches, tr_loss, tr_auc, vd_loss, vd_a
     str(batch_id).zfill(4), 
     str(n_batches).zfill(4), 
     np.round(tr_loss,4), 
-    np.round(tr_auc,4),
     np.round(vd_loss,4),  
-    np.round(vd_auc,4)
     )
   )
   sys.stdout.flush()
@@ -366,8 +442,8 @@ def print_progress(epoch_id, batch_id, n_batches, tr_loss, tr_auc, vd_loss, vd_a
 
 ## Deep Learning Model
 ###########################################################################################################################
-def model(X, Y, X_valid, Y_valid, layers_dims, forward_propagation, backward_propagation, cost_function, file_name, params=None,
-          learning_rate=0.0007, mini_batch_size=64, beta=0.9, beta1=0.9, beta2=0.999, epsilon=1e-8, num_epochs=5000, print_cost=True):
+def model(X, Y, X_valid, Y_valid, layers_dims, file_name, params=None, learning_rate=0.0007, mini_batch_size=64, 
+          beta=0.9, beta1=0.9, beta2=0.999, epsilon=1e-8, num_epochs=5000, print_cost=True):
     """
     3-layer neural network model which can be run in different optimizer modes.
     
@@ -414,7 +490,7 @@ def model(X, Y, X_valid, Y_valid, layers_dims, forward_propagation, backward_pro
         # Define the random minibatches. We increment the seed to reshuffle differently the dataset after each epoch
         seed = seed + 1
         minibatches = random_mini_batches(X=X, Y=Y, mini_batch_size=mini_batch_size, seed=seed)
-        total_cost = 0
+        total_loss = 0
         k = len(minibatches) # number of mini-batches
         
         # Iterating through all mini-batches
@@ -427,7 +503,7 @@ def model(X, Y, X_valid, Y_valid, layers_dims, forward_propagation, backward_pro
             a3, caches = forward_propagation(minibatch_X, parameters)
 
             # Compute cost and add to the cost total
-            total_cost += cost_function(a3, minibatch_Y)
+            total_loss += loss_function(a3, minibatch_Y)
 
             # Backward propagation
             grads = backward_propagation(minibatch_X, minibatch_Y, caches)
@@ -447,36 +523,25 @@ def model(X, Y, X_valid, Y_valid, layers_dims, forward_propagation, backward_pro
             )
 
             # Calcularing the AUC on the train set
-            tr_loss = total_cost/((j+1)*mini_batch_size)
-            tr_auc = roc_auc_score(minibatch_Y.T, a3.T)
+            tr_loss = total_loss/((j+1)*mini_batch_size)
 
             # Calcularing the AUC on the validation set
             a3_valid, _ = forward_propagation(X_valid, parameters)
-            vd_loss = cost_function(a3_valid, Y_valid)/n
-            vd_auc = roc_auc_score(Y_valid.T, a3_valid.T)
+            vd_loss = loss_function(a3_valid, Y_valid)/n
             
             # Printing progress
             print_progress(
                 epoch_id=i, 
                 batch_id=j, 
                 n_batches=k, 
-                tr_loss=tr_loss, 
-                tr_auc=tr_auc,
-                vd_loss=vd_loss,
-                vd_auc=vd_auc
+                tr_loss=tr_loss,
+                vd_loss=vd_loss
             )
             
-            # Ssve weights every 100 mini-batch
+            # Ssve weights every 1000 mini-batch
             if j%1000 == 0:
-                for param in ['W1', 'b1', 'W2', 'b2', 'W3', 'b3']:
+                for param in parameters:
                     with open(file_path.format(param=param, file_name=file_name), 'wb') as f:
                         np.save(f, parameters[param])
-        
-        # Updating Mean Cost
-        train_cost = total_cost/m
-        a3_valid, _ = forward_propagation(X_valid, parameters)
-        validation_cost = cost_function(a3_valid, Y_valid)/n
-        new_cost = (train_cost, validation_cost)
-        costs.append(new_cost)
             
     return parameters, costs
