@@ -61,3 +61,24 @@ Lecture slides are found in the sub-course repository.
     - [Face Recognition](https://github.com/FelipeTufaile/Deep-Learning-Specialization/blob/main/4.%20Convolutional%20Neural%20Networks/Week%204/W4A1/Face_Recognition.ipynb)
     - [Art Generation with Neural Style Transfer](https://github.com/FelipeTufaile/Deep-Learning-Specialization/blob/main/4.%20Convolutional%20Neural%20Networks/Week%204/W4A2/Art_Generation_with_Neural_Style_Transfer.ipynb)
 
+### [5. Sequence Models](https://github.com/FelipeTufaile/Deep-Learning-Specialization/tree/main/4.%20Convolutional%20Neural%20Networks)
+
+Lecture slides are found in the sub-course repository.
+
+**Programming assignment**
+
+- **Week 1**:
+    - [Building a Recurrent Neural Network Step by Step](https://github.com/FelipeTufaile/Deep-Learning-Specialization/blob/main/5.%20Sequence%20Models/Week%201/W1A1/Building_a_Recurrent_Neural_Network_Step_by_Step.ipynb)
+    - [Character Level Language Model - Dinosaurus Island](https://github.com/FelipeTufaile/Deep-Learning-Specialization/blob/main/5.%20Sequence%20Models/Week%201/W1A2/Dinosaurus_Island_Character_level_language_model.ipynb)
+    - [Improvise a Jazz Solo with an LSTM Network](https://github.com/FelipeTufaile/Deep-Learning-Specialization/blob/main/5.%20Sequence%20Models/Week%201/W1A3/Improvise_a_Jazz_Solo_with_an_LSTM_Network_v4.ipynb)
+- **Week 2**:
+    - [Operations on Word Vectors](https://github.com/FelipeTufaile/Deep-Learning-Specialization/blob/main/5.%20Sequence%20Models/Week%202/W2A1/Operations_on_word_vectors_v2a.ipynb)
+    - [Emojify](https://github.com/FelipeTufaile/Deep-Learning-Specialization/blob/main/5.%20Sequence%20Models/Week%202/W2A2/Emoji_v3a.ipynb)
+- **Week 3**:
+    - [Neural Machine Translation](https://github.com/FelipeTufaile/Deep-Learning-Specialization/blob/main/5.%20Sequence%20Models/Week%203/W3A1/Neural_machine_translation_with_attention_v4a.ipynb)
+    - [Trigger Word Detection](https://github.com/FelipeTufaile/Deep-Learning-Specialization/blob/main/5.%20Sequence%20Models/Week%203/W3A2/Trigger_word_detection_v2a.ipynb)
+- **Week 4**:
+    - [Transformer Network](https://github.com/FelipeTufaile/Deep-Learning-Specialization/blob/main/5.%20Sequence%20Models/Week%204/W4A1/C5_W4_A1_Transformer_Subclass_v1.ipynb)
+    - [Transformer Network Application: Named-Entity Recognition](https://github.com/FelipeTufaile/Deep-Learning-Specialization/blob/main/5.%20Sequence%20Models/Week%204/W4A2_UGL/Transformer_application_Named_Entity_Recognition.ipynb)
+    - [Transformer Pre-processing](https://github.com/FelipeTufaile/Deep-Learning-Specialization/blob/main/5.%20Sequence%20Models/Week%204/W4A4_UGL_POS/Embedding_plus_Positional_encoding.ipynb)
+    - [Transformer Network Application: Question Answering](https://github.com/FelipeTufaile/Deep-Learning-Specialization/blob/main/5.%20Sequence%20Models/Week%204/W4A3_UGL/QA_dataset.ipynb)
