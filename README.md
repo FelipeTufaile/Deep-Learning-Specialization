@@ -29,5 +29,5 @@ Course offered by [deeplearning.ai](https://www.deeplearning.ai) at [coursera](h
 - **Week 3**:
     - [Tensorflow Introduction](https://github.com/FelipeTufaile/Deep-Learning-Specialization/blob/main/2.%20Hyperparameter%20tuning%20Regularization%20and%20Optimization/Week%203/W3A1/Tensorflow_introduction.ipynb)
 
-# Specialization certificate:
-![Certificate](Certificate.jpg)
+## Specialization certificate:
+![Certificate](https://github.com/FelipeTufaile/Deep-Learning-Specialization/blob/main/Certificate.pdf)
